@@ -24,6 +24,7 @@
 // Display declaration
 U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI u8g2 (U8G2_R0, 5, 22, 17);
 
+// Building structure for first meteor size
 typedef struct {
   int xpos = 0;
   int ypos = 0;
@@ -31,21 +32,31 @@ typedef struct {
   int Height = 3;
 } meteortp1;
 
+typedef struct {
+  int xpos = 0;
+  int ypos = 0;
+  int Length = 4;
+  int Height = 2;
+} ship;
+
 /*
- * Collision detection
- * 
- * if(meteor.ypos < 64){
- *  if(
- *  (meteor.xpos + meteor.length) > ship.xpos && 
- *  meteor.xpos < (ship.xpos + ship.length) &&
- *  (meteor.ypos + meteor.height) > ship.ypos &&
- *  meteor.ypos < (ship.ypos + ship.height)
- *  ){
- *    hit = true;
- *  }
- * }
- * 
- */
+   Collision detection
+
+   if(meteor.ypos < 64){
+    if(
+    (meteor.xpos + meteor.length) > ship.xpos &&
+    meteor.xpos < (ship.xpos + ship.length) &&
+    (meteor.ypos + meteor.height) > ship.ypos &&
+    meteor.ypos < (ship.ypos + ship.height)
+    ){
+      hit = true;
+    }
+   }
+
+*/
+
+  // Create ship
+  ship player;
 
 void setup() {
   Serial.begin(115200);
@@ -67,5 +78,10 @@ void setup() {
 }
 
 void loop() {
-
+  for (int i = 9; i < 117; i++) {
+    u8g2.clearBuffer();
+    u8g2.drawFrame(i, 10, player.Length, player.Height);
+    u8g2.sendBuffer();
+    delay(50);
+  }
 }
