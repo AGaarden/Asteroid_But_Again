@@ -48,7 +48,8 @@ typedef struct {
   int Height = 2;
 } ship;
 
-
+// Create meteor array
+meteortp1 meteorArr[8];
 
 // Create ship
 ship player;
