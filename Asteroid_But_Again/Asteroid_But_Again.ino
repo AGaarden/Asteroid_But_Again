@@ -168,7 +168,7 @@ void loop() {
     }
 
     if (isHit) {
-      // Game over code here
+      GameOver();
     }
   }
 }
