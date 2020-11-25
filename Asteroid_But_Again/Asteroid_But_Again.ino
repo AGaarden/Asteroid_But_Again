@@ -62,6 +62,10 @@ int potentioInput;
 long previousMillis = 0;
 long interval = 100;
 
+// Boolean for determining whether a hit was done
+bool isHit = false;
+
+
 /*
    Function: DrawObjects
    Input: Nothing(?)
@@ -80,24 +84,39 @@ void DrawObjects(int potentioInput) {
   u8g2.sendBuffer();
 }
 
-bool CheckCollision() {
-  /*
-    Collision detection
-
-    if(meteor.ypos < 64){
-    if(
-    (meteor.xpos + meteor.length) > ship.xpos &&
-    meteor.xpos < (ship.xpos + ship.length) &&
-    (meteor.ypos + meteor.height) > ship.ypos &&
-    meteor.ypos < (ship.ypos + ship.height)
-    ){
-      hit = true;
+/*
+ * Function: CheckCollision
+ * Input: The meteor that collision is being checked on
+ * Output: Whether or not the ship has collided
+ * Remarks: First checks whether the meteor is off-screen, then does collision check
+ */
+bool CheckCollision(meteortp1 meteor) {
+  if (meteor.ypos < 64) {
+    if (
+      (meteor.xpos + meteor.Length) > player.xpos &&
+      meteor.xpos < (player.xpos + player.Length) &&
+      (meteor.ypos + meteor.Height) > player.ypos &&
+      meteor.ypos < (player.ypos + player.Height)
+    ) {
+      return true;
     }
-    }
-
-  */
-
+  }
   return false;
+}
+
+/*
+ * Function: GameOver
+ * Input: None
+ * Output: None
+ * Remarks: Triggered when isHit = true. Will loop until the ESP is reset
+ */
+void GameOver(){
+  // Display Game over
+  u8g2.clearBuffer();
+  u8g2.drawStr(16, 39, "Game over");
+  u8g2.sendBuffer();
+
+  exit(0); // Forces the computer to stop looping
 }
 
 void setup() {
@@ -141,7 +160,12 @@ void loop() {
     DrawObjects(potentioInput);
 
     // Collision check
-    bool isHit = CheckCollision();
+    for (int i = 0; i < sizeof(meteorArr); i++) {
+      bool isHit = CheckCollision(meteorArr[i]);
+      if(isHit){ // There is no reason to continue checking if the player is hit
+        i = 8;
+      }
+    }
 
     if (isHit) {
       // Game over code here
