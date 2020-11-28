@@ -75,29 +75,40 @@ void MoveMeteors(meteortp1 *meteorArrPtr, int meteorArrPos) {
     if ((meteorArrPtr + meteorArrPos) -> isActive != true) {
       SpawnMeteor(meteorArrPtr, meteorArrPos);
     }
-    (meteorArrPtr + meteorArrPos) -> ypos += 1;
-
+    if ((meteorArrPtr + meteorArrPos) -> isActive) {
+      (meteorArrPtr + meteorArrPos) -> ypos += 1;
+    }
   }
 
   // Edge cases first. Last meteor
   else if (meteorArrPos == (meteorArrSize - 1)) {
     if ((meteorArrPtr + meteorArrPos) -> isActive != true) {
-      if ((meteorArrPtr + meteorArrPos - 1) -> ypos >= 3) {
+      if ((meteorArrPtr + meteorArrPos - 1) -> ypos >= 3 + (meteorArrPtr -> lgt)) {
         SpawnMeteor(meteorArrPtr, meteorArrPos);
       }
     }
-    (meteorArrPtr + meteorArrPos) -> ypos += 1;
+    if ((meteorArrPtr + meteorArrPos) -> isActive) {
+      (meteorArrPtr + meteorArrPos) -> ypos += 1;
+    }
   }
 
   // The rest of the meteors
   else {
     if ((meteorArrPtr + meteorArrPos) -> isActive != true) {
-      if ((meteorArrPtr + meteorArrPos - 1) -> ypos >= 3) {
+      if ((meteorArrPtr + meteorArrPos - 1) -> ypos >= 3 + (meteorArrPtr -> lgt)) {
         SpawnMeteor(meteorArrPtr, meteorArrPos);
       }
     }
-    (meteorArrPtr + meteorArrPos) -> ypos += 1;
+    if ((meteorArrPtr + meteorArrPos) -> isActive) {
+      (meteorArrPtr + meteorArrPos) -> ypos += 1;
+    }
   }
+
+  if ((meteorArrPtr + meteorArrPos) -> ypos >= 64) {
+    (meteorArrPtr + meteorArrPos) -> isActive = false;
+    (meteorArrPtr + meteorArrPos) -> ypos = 0;
+  }
+
 }
 
 /*
@@ -200,9 +211,8 @@ void loop(void) {
     // Collision check
     for (int i = 0; i < (sizeof(meteorArr) / sizeof(meteortp1)); i++) {
       isHit = CheckCollision(&(meteorArr[i]));
-      //bool isHit = CheckCollision(meteorArr[i]);
       if (isHit) { // There is no reason to continue checking if the player is hit
-        i = 8;
+        break;
       }
     }
 
