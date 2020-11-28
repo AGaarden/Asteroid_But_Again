@@ -35,18 +35,18 @@ U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI u8g2 (U8G2_R0, 5, 22, 17);
 // Building structure for first meteor size
 typedef struct {
   bool isActive = false;
-  int xpos = 0;
-  int ypos = 0;
   int lgt = 5; // Length
   int hgt = 3; // Height
+  int xpos = 0;
+  int ypos = 0;
 } meteortp1;
 
 // Building structure for ship
 typedef struct {
-  int xpos = 0;
-  int ypos = 0;
   int lgt = 4; // Length
   int hgt = 2; // Height
+  int xpos = 0;
+  int ypos = 63 - hgt;
 } ship;
 
 // Create meteor array
@@ -56,18 +56,11 @@ meteortp1 meteorArr[meteorArrSize];
 // Create ship
 ship player;
 
-// Define integer for potentiometer input
-int potentioRawInput;
-int potentioInput;
-
 // Define longs for the timer
 long previousMillis = 0;
 long interval = 100;
 
-// Boolean for determining whether a hit was done
-bool isHit = false;
-
-void SpawnMeteor(meteortp1 *meteorArrPtr, int meteorArrPos){
+void SpawnMeteor(meteortp1 *meteorArrPtr, int meteorArrPos) {
   float randomSpawnSpot = random(0, 127 - meteorArrPtr -> lgt); // random always returns a float
   round(randomSpawnSpot); // as random returns a float, it is rounded to have a integer position
 
@@ -79,31 +72,32 @@ void SpawnMeteor(meteortp1 *meteorArrPtr, int meteorArrPos){
 void MoveMeteors(meteortp1 *meteorArrPtr, int meteorArrPos) {
   // Edge cases first. First meteor
   if (meteorArrPos == 0) {
-    if(meteorArrPtr -> isActive != true){
+    if ((meteorArrPtr + meteorArrPos) -> isActive != true) {
       SpawnMeteor(meteorArrPtr, meteorArrPos);
     }
     (meteorArrPtr + meteorArrPos) -> ypos += 1;
-    
+
   }
 
   // Edge cases first. Last meteor
   else if (meteorArrPos == (meteorArrSize - 1)) {
-
+    if ((meteorArrPtr + meteorArrPos) -> isActive != true) {
+      if ((meteorArrPtr + meteorArrPos - 1) -> ypos >= 3) {
+        SpawnMeteor(meteorArrPtr, meteorArrPos);
+      }
+    }
+    (meteorArrPtr + meteorArrPos) -> ypos += 1;
   }
 
   // The rest of the meteors
   else {
-
+    if ((meteorArrPtr + meteorArrPos) -> isActive != true) {
+      if ((meteorArrPtr + meteorArrPos - 1) -> ypos >= 3) {
+        SpawnMeteor(meteorArrPtr, meteorArrPos);
+      }
+    }
+    (meteorArrPtr + meteorArrPos) -> ypos += 1;
   }
-
-
-  // How they should go
-  // Check if meteor is active
-  // If no, check if meteor can be spawned
-  // If yes, spawn it
-  // If no, move on
-  // If meteor is active, move it
-
 }
 
 /*
@@ -112,20 +106,20 @@ void MoveMeteors(meteortp1 *meteorArrPtr, int meteorArrPos) {
    Output: Nothing
    Remarks: Draws frames of the objects at this point in time
 */
-void DrawObjects(int potentioInput, meteortp1 *meteorArrPtr) {
+void DrawObjects(ship *player, meteortp1 *meteorArrPtr) {
   u8g2.clearBuffer();
 
   // Player ship
-  u8g2.drawFrame(potentioInput, 63 - player.hgt, player.lgt, player.hgt);
+  player -> xpos = (analogRead(POTENTIOPIN) * analogWidthConvert);
+  u8g2.drawFrame(player -> xpos, player -> ypos, player -> lgt, player -> hgt);
 
   // Meteors
   for (int i = 0; i < (sizeof(meteorArr) / sizeof(meteortp1)); i++) {
     MoveMeteors(meteorArr, i);
-    if((meteorArrPtr + i) -> isActive){
+    if ((meteorArrPtr + i) -> isActive) {
       u8g2.drawFrame((meteorArrPtr + i) -> xpos, (meteorArrPtr + i) -> ypos, (meteorArrPtr + i) -> lgt, (meteorArrPtr + i) -> hgt);
     }
   }
-
 
   u8g2.sendBuffer();
 }
@@ -136,20 +130,6 @@ void DrawObjects(int potentioInput, meteortp1 *meteorArrPtr) {
    Output: Whether or not the ship has collided
    Remarks: First checks whether the meteor is off-screen, then does collision check
 */
-/*bool CheckCollision(meteortp1 meteor) {
-  if (meteor.ypos < 64) {
-    if (
-      (meteor.ypos + meteor.hgt) > player.ypos &&
-      meteor.ypos < (player.ypos + player.hgt) &&
-      (meteor.xpos + meteor.lgt) > player.xpos &&
-      meteor.xpos < (player.xpos + player.lgt)
-    ) {
-      return true;
-    }
-  }
-  return false;
-  }*/
-
 bool CheckCollision(meteortp1 *meteorPtr) {
   if (meteorPtr -> ypos < 64) {
     if (
@@ -163,7 +143,6 @@ bool CheckCollision(meteortp1 *meteorPtr) {
   }
   return false;
 }
-
 
 /*
    Function: GameOver
@@ -202,30 +181,25 @@ void setup(void) {
   u8g2.sendBuffer();
   delay(3000);
   u8g2.clearDisplay();
-
 }
 
 void loop(void) {
   // Current millis based on time since Arduino turned on
   unsigned long currentMillis = millis();
 
+  // Boolean for determining whether a hit was done
+  bool isHit = false;
+
   // Starts processes if the time reaches the interval
   if (currentMillis - previousMillis > interval) {
     previousMillis = currentMillis; // Sets previousMillis to be currentMillis to compare next run
 
-    // Troubleshooting code
-    int potentioRawInput = analogRead(POTENTIOPIN);
-    int potentioInput = (analogRead(POTENTIOPIN) * analogWidthConvert);
-
-    Serial.println("Raw player input: " + String(potentioRawInput));
-    Serial.println("Calculated player input: " + String(potentioInput));
-
     // Drawing all objects on screen
-    DrawObjects(potentioInput, meteorArr);
+    DrawObjects(&(player), meteorArr);
 
     // Collision check
     for (int i = 0; i < (sizeof(meteorArr) / sizeof(meteortp1)); i++) {
-      bool isHit = CheckCollision(&(meteorArr[i]));
+      isHit = CheckCollision(&(meteorArr[i]));
       //bool isHit = CheckCollision(meteorArr[i]);
       if (isHit) { // There is no reason to continue checking if the player is hit
         i = 8;
