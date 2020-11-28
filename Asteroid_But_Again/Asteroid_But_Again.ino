@@ -67,14 +67,23 @@ long interval = 100;
 // Boolean for determining whether a hit was done
 bool isHit = false;
 
+void SpawnMeteor(meteortp1 *meteorArrPtr, int meteorArrPos){
+  float randomSpawnSpot = random(0, 127 - meteorArrPtr -> lgt); // random always returns a float
+  round(randomSpawnSpot); // as random returns a float, it is rounded to have a integer position
 
+  // The meteor's isActive is set to true, and the x position is set to the random position
+  (meteorArrPtr + meteorArrPos) -> isActive = true;
+  (meteorArrPtr + meteorArrPos) -> xpos = randomSpawnSpot;
+}
 
 void MoveMeteors(meteortp1 *meteorArrPtr, int meteorArrPos) {
   // Edge cases first. First meteor
   if (meteorArrPos == 0) {
     if(meteorArrPtr -> isActive != true){
-      
+      SpawnMeteor(meteorArrPtr, meteorArrPos);
     }
+    (meteorArrPtr + meteorArrPos) -> ypos += 1;
+    
   }
 
   // Edge cases first. Last meteor
@@ -103,7 +112,7 @@ void MoveMeteors(meteortp1 *meteorArrPtr, int meteorArrPos) {
    Output: Nothing
    Remarks: Draws frames of the objects at this point in time
 */
-void DrawObjects(int potentioInput) {
+void DrawObjects(int potentioInput, meteortp1 *meteorArrPtr) {
   u8g2.clearBuffer();
 
   // Player ship
@@ -112,6 +121,9 @@ void DrawObjects(int potentioInput) {
   // Meteors
   for (int i = 0; i < (sizeof(meteorArr) / sizeof(meteortp1)); i++) {
     MoveMeteors(meteorArr, i);
+    if((meteorArrPtr + i) -> isActive){
+      u8g2.drawFrame((meteorArrPtr + i) -> xpos, (meteorArrPtr + i) -> ypos, (meteorArrPtr + i) -> lgt, (meteorArrPtr + i) -> hgt);
+    }
   }
 
 
@@ -181,6 +193,9 @@ void setup(void) {
   // Set font for writing
   u8g2.setFont(u8g2_font_ncenB14_tr);
 
+  // Seed for random function
+  randomSeed(analogRead(6));
+
   // Introduction text
   u8g2.clearBuffer();
   u8g2.drawStr(16, 39, "Poggers");
@@ -206,7 +221,7 @@ void loop(void) {
     Serial.println("Calculated player input: " + String(potentioInput));
 
     // Drawing all objects on screen
-    DrawObjects(potentioInput);
+    DrawObjects(potentioInput, meteorArr);
 
     // Collision check
     for (int i = 0; i < (sizeof(meteorArr) / sizeof(meteortp1)); i++) {
