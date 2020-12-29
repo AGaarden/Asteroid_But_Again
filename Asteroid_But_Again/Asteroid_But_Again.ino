@@ -188,7 +188,7 @@ void setup(void) {
 
   // Introduction text
   u8g2.clearBuffer();
-  u8g2.drawStr(16, 39, "Poggers");
+  u8g2.drawStr(16, 39, "Asteroid");
   u8g2.sendBuffer();
   delay(3000);
   u8g2.clearDisplay();
